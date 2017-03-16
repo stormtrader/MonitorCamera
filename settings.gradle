@@ -1,0 +1,2 @@
+include ':app', ':diffpic'
+include ':openCVLibrary320'
