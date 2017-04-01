@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/diffpic" />
             <option value="$PROJECT_DIR$/openCVLibrary320" />
+            <option value="$PROJECT_DIR$/telephony-common_intermediates" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

@@ -12,16 +12,22 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.database.ContentObserver;
+import android.database.Cursor;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -123,6 +129,8 @@ public class TestCameraActivity extends Activity {
                                     msg.what = DIFFN;
                                     msg.obj = tmpStr;
                                     handler.sendMessage(msg);
+
+                                    //SMSSender.sendSMS("13802258141", "Diff N ="+diffN);
                                 }
                             }
 
@@ -184,7 +192,50 @@ public class TestCameraActivity extends Activity {
         
         setCameraAndDisplay(surfaceView.getWidth(), surfaceView.getHeight());
     }
-    
+
+    private Uri SMS_INBOX = Uri.parse("content://sms/");
+    public void getSmsFromPhone() {
+        ContentResolver cr = getContentResolver();
+        String[] projection = new String[] { "body" };//"_id", "address", "person",, "date", "type
+        String where = " address = '13802258141' AND date >  "
+                + (System.currentTimeMillis() - 10 * 60 * 1000);
+        Cursor cur = cr.query(SMS_INBOX, projection, where, null, "date desc");
+        if (null == cur)
+            return;
+        if (cur.moveToNext()) {
+            //String number = cur.getString(cur.getColumnIndex("address"));//手机号
+            //String name = cur.getString(cur.getColumnIndex("person"));//联系人姓名列表
+            String body = cur.getString(cur.getColumnIndex("body"));
+            Log.v(TAG, "sms body="+body);
+            SMSSender.sendSMS("13802258141", "Good State");
+        }
+    }
+
+
+    private SmsObserver smsObserver;
+
+
+    public Handler smsHandler = new Handler() {
+        //这里可以进行回调的操作
+        //TODO
+
+    };
+
+    class SmsObserver extends ContentObserver {
+
+        public SmsObserver(Context context, Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+            //每当有新短信到来时，使用我们获取短消息的方法
+            Log.i(TAG, "get new message");
+            getSmsFromPhone();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
@@ -192,6 +243,11 @@ public class TestCameraActivity extends Activity {
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_incell_camera);
+
+        smsObserver = new SmsObserver(this, smsHandler);
+        getContentResolver().registerContentObserver(SMS_INBOX, true,
+                smsObserver);
+
         surfaceView = (SurfaceView) this.findViewById(R.id.surfaceView);
         switchCamera = (Button) this.findViewById(R.id.switch_btn);
         switchCamera.setOnClickListener(new OnClickListener(){

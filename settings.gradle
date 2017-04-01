@@ -1,2 +1,2 @@
-include ':app', ':diffpic'
+include ':app', ':diffpic', ':telephony-common_intermediates'
 include ':openCVLibrary320'
